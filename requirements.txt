@@ -5,4 +5,4 @@ datasets
 bitsandbytes
 scipy
 numpy>=1.22,<2.0
-trl
+

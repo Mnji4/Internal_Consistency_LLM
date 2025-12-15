@@ -1,9 +1,8 @@
 import os
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
-from trl import SFTTrainer
-from peft import LoraConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer, DataCollatorForSeq2Seq
+from peft import LoraConfig, get_peft_model, TaskType
 from src.config import config
 import argparse
 
@@ -16,9 +15,10 @@ def main():
     parser.add_argument("--lr", type=float, default=2e-5)
     args = parser.parse_args()
 
-    # Load items
+    # 1. Load Data
     dataset = load_dataset("json", data_files=args.data_path, split="train")
-    
+
+    # 2. Load Model & Tokenizer
     model = AutoModelForCausalLM.from_pretrained(
         config.MODEL_NAME,
         device_map="auto",
@@ -26,17 +26,68 @@ def main():
         torch_dtype=torch.float16
     )
     tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME, trust_remote_code=True)
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-    # LoRA Config
+    # 3. Apply LoRA
     peft_config = LoraConfig(
         r=16,
         lora_alpha=32,
         lora_dropout=0.05,
-        target_modules=["q_proj", "v_proj"], # Adjust based on model architecture (Qwen uses c_attn usually? No, q_proj/v_proj standard now)
-        task_type="CAUSAL_LM",
+        target_modules=["q_proj", "v_proj"],
+        task_type=TaskType.CAUSAL_LM,
     )
+    model = get_peft_model(model, peft_config)
+    model.print_trainable_parameters()
 
+    # 4. Prepare Data
+    # Pre-process dataset to convert messages to input_ids
+    def preprocess_function(example):
+        # Format: User: ... \nAssistant: ...
+        # Simplified manual template
+        sources = []
+        targets = []
+        
+        # example['messages'] is a list of lists if batched, or list of dicts if single? 
+        # map with batched=False by default processes one example (dict)
+        # map with batched=True processes a batch (dict of lists)
+        
+        # Let's assume batched=False first for simplicity in logic
+        messages = example['messages']
+        user_text = messages[0]['content']
+        assistant_text = messages[1]['content']
+        
+        # Input for causal LM training usually: Prompt + Completion
+        # We want to train on Completion only, but standard Trainer trains on everything if we don't mask labels.
+        # For simplicity in this lightweight script, we might train on full sequence or just ignore masking.
+        # But let's try to be slightly correct: masking prompt is better.
+        
+        # Format
+        # Qwen/ChatML style might be complex to manually token-mask without template.
+        # Let's use a simple format: "User: {q}\n\nAssistant: {a}"
+        
+        full_text = f"User: {user_text}\n\nAssistant: {assistant_text}" + tokenizer.eos_token
+        
+        tokenized = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+        input_ids = tokenized["input_ids"]
+        labels = input_ids.copy()
+        
+        # Masking the prompt (User part)
+        # Find the "Assistant: " part tokenization?
+        # Heuristic: Find the index where assistant starts
+        # This is tricky with tokenization.
+        # "Simple" Approach: Just train on everything. It's often fine for SFT if prompt distribution is diverse.
+        # Or, just use DataCollatorForSeq2Seq which handles padding.
+        
+        return {
+            "input_ids": input_ids,
+            "labels": labels, # Train on everything for now to reduce "Too few arguments" complexity
+            "attention_mask": tokenized["attention_mask"]
+        }
+
+    train_dataset = dataset.map(preprocess_function, batched=False)
+
+    # 5. Training Args
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         num_train_epochs=args.num_epochs,
@@ -49,37 +100,15 @@ def main():
         fp16=True,
         max_grad_norm=0.3,
         warmup_ratio=0.03,
-        group_by_length=True,
-        lr_scheduler_type="constant",
+        remove_unused_columns=False, # Important for custom dataset
+        ddp_find_unused_parameters=False,
     )
 
-
-
-    # Need a formatting function for messages
-    def formatting_prompts_func(example):
-        output_texts = []
-        for messages in example['messages']:
-            # Manual chat template application if tokenizer doesn't support it perfectly or for control
-            # Qwen uses ChatML usually: <|im_start|>user\n...<|im_end|><|im_start|>assistant\n...<|im_end|>
-            # Let's use tokenizer.apply_chat_template if available, else manual
-            try:
-                text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-            except:
-                # Fallback manual
-                user = messages[0]['content']
-                assistant = messages[1]['content']
-                text = f"User: {user}\nAssistant: {assistant}"
-            output_texts.append(text)
-        return output_texts
-
-    trainer = SFTTrainer(
+    trainer = Trainer(
         model=model,
-        train_dataset=dataset,
-        peft_config=peft_config,
-        tokenizer=tokenizer,
+        train_dataset=train_dataset,
         args=training_args,
-        formatting_func=formatting_prompts_func,
-        max_seq_length=config.MAX_NEW_TOKENS + 256 # ample space
+        data_collator=DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True),
     )
 
     trainer.train()
