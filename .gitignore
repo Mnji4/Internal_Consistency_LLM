@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Output (Ignore large files, but keep JSONL if manageable or expected to sync)
+# User wants to sync results back via git, so we KEEP jsonl files.
+# But we should ignore model checkpoints.
+checkpoints/
+*.pt
+*.bin
+*.safetensors
+wandb/
+
+# Environment
+.env
+venv/
+.venv/
