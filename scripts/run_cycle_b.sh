@@ -20,8 +20,8 @@ echo "Date: $(date)"
 echo "=================================================="
 
 # 1. Environment Check (Restored to fix numpy)
-echo "[1/4] Checking Environment..."
-pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
+# echo "[1/4] Checking Environment..."
+# pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
 
 # 2. Data Generation (Skipped)
 # echo "[2/4] Generating Dataset..."

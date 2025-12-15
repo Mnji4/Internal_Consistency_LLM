@@ -53,19 +53,7 @@ def main():
         lr_scheduler_type="constant",
     )
 
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=dataset,
-        peft_config=peft_config,
-        dataset_text_field=None, # We use formatting func or messages
-        # formatting_func=... 
-        # TRL's SFTTrainer expects 'text' column or formatting_func. 
-        # Since we have "messages", we need to format it.
-        # But wait, TRL supports packed dataset if we convert to text.
-        tokenizer=tokenizer,
-        args=training_args,
-        max_seq_length=512,
-    )
+
 
     # Need a formatting function for messages
     def formatting_prompts_func(example):
