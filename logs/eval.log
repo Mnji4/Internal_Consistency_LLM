@@ -1,0 +1,5 @@
+Loading test data from /home/zenianliang/Internal_Consistency_LLM/data/train_prompts.jsonl
+Loading Base Model: Qwen/Qwen3-0.6B
+Loading model: Qwen/Qwen3-0.6B
+Loading LoRA Adapter from: /home/zenianliang/Internal_Consistency_LLM/checkpoints
+Error loading adapter (maybe raw model?): Can't find 'adapter_config.json' at '/home/zenianliang/Internal_Consistency_LLM/checkpoints'
