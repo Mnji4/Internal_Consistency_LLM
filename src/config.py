@@ -6,7 +6,7 @@ class Config:
     os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
     
     # Model
-    MODEL_NAME = "Qwen/Qwen2.5-0.5B" 
+    MODEL_NAME = "Qwen/Qwen3-0.6B" 
     
     # Paths
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
