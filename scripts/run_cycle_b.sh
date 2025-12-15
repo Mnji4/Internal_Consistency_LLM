@@ -19,26 +19,24 @@ echo "Project Root: $PROJECT_ROOT"
 echo "Date: $(date)"
 echo "=================================================="
 
-# 1. Environment Check (Skipped as requested)
-# echo "[1/4] Checking Environment..."
-# pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
+# 1. Environment Check (Restored to fix numpy)
+echo "[1/4] Checking Environment..."
+pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
 
-# 2. Data Generation (Skipped as requested)
+# 2. Data Generation (Skipped)
 # echo "[2/4] Generating Dataset..."
 # python3 $PROJECT_ROOT/src/generate_dataset.py | tee $LOG_DIR/data_gen.log
 # echo "Dataset generated at $DATA_DIR/train_prompts.jsonl"
-Qwen/Qwen3-0.6B
-# 3. Inference
-echo "[3/4] Running Inference (Validation/Filtering Phase)..."
-# Using a limit for quick test if needed, remove --limit for full run
-# python3 $PROJECT_ROOT/src/inference/run_inference.py --limit 10 | tee $LOG_DIR/inference.log
-python3 $PROJECT_ROOT/src/inference/run_inference.py | tee $LOG_DIR/inference.log
-echo "Inference results at $OUTPUT_DIR/inference_results.jsonl"
 
-# 4. Filtering
-echo "[4/4] Filtering & Creating SFT Dataset..."
-python3 $PROJECT_ROOT/src/analysis/filter_data.py | tee $LOG_DIR/filter.log
-echo "SFT Dataset at $DATA_DIR/sft_train.jsonl"
+# 3. Inference (Skipped)
+# echo "[3/4] Running Inference (Validation/Filtering Phase)..."
+# python3 $PROJECT_ROOT/src/inference/run_inference.py | tee $LOG_DIR/inference.log
+# echo "Inference results at $OUTPUT_DIR/inference_results.jsonl"
+
+# 4. Filtering (Skipped)
+# echo "[4/4] Filtering & Creating SFT Dataset..."
+# python3 $PROJECT_ROOT/src/analysis/filter_data.py | tee $LOG_DIR/filter.log
+# echo "SFT Dataset at $DATA_DIR/sft_train.jsonl"
 
 # 5. Training (Optional/Separate step usually, but included for 'All-in-one')
 echo "[5/5] Starting SFT Training..."
