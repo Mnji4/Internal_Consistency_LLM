@@ -43,28 +43,9 @@ def main():
     # 4. Prepare Data
     # Pre-process dataset to convert messages to input_ids
     def preprocess_function(example):
-        # Format: User: ... \nAssistant: ...
-        # Simplified manual template
-        sources = []
-        targets = []
-        
-        # example['messages'] is a list of lists if batched, or list of dicts if single? 
-        # map with batched=False by default processes one example (dict)
-        # map with batched=True processes a batch (dict of lists)
-        
-        # Let's assume batched=False first for simplicity in logic
         messages = example['messages']
         user_text = messages[0]['content']
         assistant_text = messages[1]['content']
-        
-        # Input for causal LM training usually: Prompt + Completion
-        # We want to train on Completion only, but standard Trainer trains on everything if we don't mask labels.
-        # For simplicity in this lightweight script, we might train on full sequence or just ignore masking.
-        # But let's try to be slightly correct: masking prompt is better.
-        
-        # Format
-        # Qwen/ChatML style might be complex to manually token-mask without template.
-        # Let's use a simple format: "User: {q}\n\nAssistant: {a}"
         
         full_text = f"User: {user_text}\n\nAssistant: {assistant_text}" + tokenizer.eos_token
         
@@ -72,20 +53,18 @@ def main():
         input_ids = tokenized["input_ids"]
         labels = input_ids.copy()
         
-        # Masking the prompt (User part)
-        # Find the "Assistant: " part tokenization?
-        # Heuristic: Find the index where assistant starts
-        # This is tricky with tokenization.
-        # "Simple" Approach: Just train on everything. It's often fine for SFT if prompt distribution is diverse.
-        # Or, just use DataCollatorForSeq2Seq which handles padding.
-        
         return {
             "input_ids": input_ids,
-            "labels": labels, # Train on everything for now to reduce "Too few arguments" complexity
+            "labels": labels,
             "attention_mask": tokenized["attention_mask"]
         }
 
-    train_dataset = dataset.map(preprocess_function, batched=False)
+    # Remove raw columns to avoid collator errors
+    train_dataset = dataset.map(
+        preprocess_function, 
+        batched=False, 
+        remove_columns=dataset.column_names
+    )
 
     # 5. Training Args
     training_args = TrainingArguments(
@@ -100,7 +79,7 @@ def main():
         fp16=True,
         max_grad_norm=0.3,
         warmup_ratio=0.03,
-        remove_unused_columns=False, # Important for custom dataset
+        remove_unused_columns=False, 
         ddp_find_unused_parameters=False,
     )
 
