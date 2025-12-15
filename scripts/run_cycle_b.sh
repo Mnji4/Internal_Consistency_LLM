@@ -10,22 +10,24 @@ LOG_DIR="$PROJECT_ROOT/logs"
 mkdir -p $LOG_DIR
 export PYTHONPATH=$PROJECT_ROOT:$PYTHONPATH
 
+# Force GPU 0
+export CUDA_VISIBLE_DEVICES=0
+
 echo "=================================================="
 echo "Starting Internal Consistency Pipeline on Machine B"
 echo "Project Root: $PROJECT_ROOT"
 echo "Date: $(date)"
 echo "=================================================="
 
-# 1. Environment Check
-# Assuming conda/venv is already active
-echo "[1/4] Checking Environment..."
-pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
+# 1. Environment Check (Skipped as requested)
+# echo "[1/4] Checking Environment..."
+# pip install -r $PROJECT_ROOT/requirements.txt | tee $LOG_DIR/install.log
 
-# 2. Data Generation
-echo "[2/4] Generating Dataset..."
-python3 $PROJECT_ROOT/src/generate_dataset.py | tee $LOG_DIR/data_gen.log
-echo "Dataset generated at $DATA_DIR/train_prompts.jsonl"
-
+# 2. Data Generation (Skipped as requested)
+# echo "[2/4] Generating Dataset..."
+# python3 $PROJECT_ROOT/src/generate_dataset.py | tee $LOG_DIR/data_gen.log
+# echo "Dataset generated at $DATA_DIR/train_prompts.jsonl"
+Qwen/Qwen3-0.6B
 # 3. Inference
 echo "[3/4] Running Inference (Validation/Filtering Phase)..."
 # Using a limit for quick test if needed, remove --limit for full run
