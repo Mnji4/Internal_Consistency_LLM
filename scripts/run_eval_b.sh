@@ -11,7 +11,7 @@ echo "Starting Evaluation on Machine B"
 echo "=================================================="
 
 python3 $PROJECT_ROOT/src/evaluate/evaluate_checkpoint.py \
-    --checkpoint_dir "$PROJECT_ROOT/checkpoints" \
+    --checkpoint_dir "$PROJECT_ROOT/checkpoints/ic_sft_v1" \
     --test_file "$PROJECT_ROOT/data/train_prompts.jsonl" | tee $LOG_DIR/eval.log
 
 echo "Evaluation Complete."

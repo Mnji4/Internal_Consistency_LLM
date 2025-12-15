@@ -17,8 +17,8 @@ class Config:
     DATASET_NAME = "folio" # or 'ruletaker' if available locally
     
     # Generation
-    BATCH_SIZE = 8
-    MAX_NEW_TOKENS = 64 # Logic answers are usually short (True/False/Uncertain)
+    BATCH_SIZE = 4 # Reduce batch size if OOM with longer seq
+    MAX_NEW_TOKENS = 256 # Increase for CoT
     
     # Perturbation
     # Logic specific perturbations

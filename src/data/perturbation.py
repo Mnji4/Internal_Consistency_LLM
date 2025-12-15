@@ -17,12 +17,12 @@ class LogicPerturbationEngine:
 
     def create_simple_prompt(self, context, question):
         """
-        Standard Logic Prompt:
+        Standard Logic Prompt with CoT:
         Context: ...
         Question: ...
-        Answer:
+        Answer: Let's think step by step.
         """
-        return f"Context:\n{context}\n\nQuestion:\n{question}\n\nAnswer:"
+        return f"Context:\n{context}\n\nQuestion:\n{question}\n\nAnswer: Let's think step by step."
 
     def create_complex_prompt(self, context, question):
         """
