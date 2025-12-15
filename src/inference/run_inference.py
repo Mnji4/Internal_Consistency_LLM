@@ -88,15 +88,11 @@ def main():
             resp_simple = responses[2*i]
             resp_complex = responses[2*i+1]
             
-            result_item = {
-                'id': item['id'],
-                'original_question': item['original_question'],
-                'ground_truth': item['ground_truth'],
-                'simple_prompt': item['simple_prompt'],
-                'complex_prompt': item['complex_prompt'],
+            result_item = item.copy()
+            result_item.update({
                 'response_simple': resp_simple,
                 'response_complex': resp_complex
-            }
+            })
             f.write(json.dumps(result_item) + "\n")
             
     print(f"Done. Results saved to {args.output_file}")

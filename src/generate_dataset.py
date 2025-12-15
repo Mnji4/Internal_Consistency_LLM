@@ -1,35 +1,39 @@
 import json
 import os
-from src.data.gsm8k_loader import GSM8KLoader
-from src.data.perturbation import PerturbationEngine
+from src.data.logic_loader import LogicLoader
+from src.data.perturbation import LogicPerturbationEngine
 from src.config import config
 from tqdm import tqdm
 
 def main():
-    # Ensure output dir exists
     os.makedirs(config.DATA_DIR, exist_ok=True)
     
-    loader = GSM8KLoader(split="train")
-    engine = PerturbationEngine()
+    loader = LogicLoader(split="train")
+    engine = LogicPerturbationEngine()
     
-    # Generate all pairs
-    print("Generating prompt pairs...")
-    # For dev/testing, maybe limit size? Or generate full. 
-    # Let's generate full but maybe print info.
+    print("Generating Logic prompt pairs...")
     all_data = []
+    
     for i in tqdm(range(len(loader))):
         sample = loader[i]
-        q = sample['question']
         
-        # Determine number of variations? For now 1 simple, 1 complex per question.
-        # We could generate MULTIPLE complex prompts per question to increase data.
+        # Folio structure: 'premises' (list), 'conclusion' (str), 'label' (str)
+        # We treat 'conclusion' as the Question?
+        # Folio: "Determine whether the conclusion follows."
+        
+        premises = LogicLoader.format_context(sample['premises'])
+        conclusion = sample['conclusion']
+        label = sample['label'] # True/False/Uncertain
+        
+        question = f"Based on the context, is the statement '{conclusion}' True, False, or Uncertain?"
         
         pair = {
             'id': i,
-            'original_question': q,
-            'ground_truth': sample['answer'],
-            'simple_prompt': engine.create_simple_prompt(q),
-            'complex_prompt': engine.create_complex_prompt(q)
+            'premises': premises,
+            'conclusion': conclusion,
+            'ground_truth': label,
+            'simple_prompt': engine.create_simple_prompt(premises, question),
+            'complex_prompt': engine.create_complex_prompt(premises, question)
         }
         all_data.append(pair)
         

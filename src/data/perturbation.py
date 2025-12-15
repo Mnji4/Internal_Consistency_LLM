@@ -1,53 +1,57 @@
 import random
 from src.config import config
 
-class PerturbationEngine:
+class LogicPerturbationEngine:
     def __init__(self):
         self.templates = config.PERTURBATION_TEMPLATES
+        # Some generic irrelevant rules/facts
+        self.noise_facts = [
+            "The moon is made of gray rock.",
+            "Water boils at 100 degrees Celsius at sea level.",
+            "Cats are popular pets.",
+            "Computers use binary code.",
+            "The capital of France is Paris.",
+            "Roses are red.",
+            "Violets are blue.",
+        ]
 
-    def create_simple_prompt(self, question):
+    def create_simple_prompt(self, context, question):
         """
-        Constructs the simple prompt. 
-        For now, it's just the clean question with a standard instruction.
+        Standard Logic Prompt:
+        Context: ...
+        Question: ...
+        Answer:
         """
-        # 可以加上明确的指令，确保模型处于答题模式
-        return f"Question: {question}\nAnswer:"
+        return f"Context:\n{context}\n\nQuestion:\n{question}\n\nAnswer:"
 
-    def create_complex_prompt(self, question):
+    def create_complex_prompt(self, context, question):
         """
-        Constructs a complex/perturbed prompt.
+        Injects noise into the context.
         """
-        template = random.choice(self.templates)
+        # Mix in irrelevant facts at random positions in the context lines?
+        # Or just append/prepend.
+        # Interleaving is harder to detect for models.
         
-        # 简单的策略：前缀干扰
-        # 也可以考虑更复杂的逻辑
-        perturbed_q = f"{template} {question}"
+        lines = context.split('\n')
         
-        return f"Question: {perturbed_q}\nAnswer:"
-
-    def generate_pairs(self, samples):
-        """
-        Given a list of samples (dicts with 'question'), return list of dicts:
-        {
-            'original_id': ...,
-            'simple_prompt': ...,
-            'complex_prompt': ...,
-            'ground_truth': ...
-        }
-        """
-        pairs = []
-        for i, sample in enumerate(samples):
-            q = sample['question']
-            pairs.append({
-                'id': i,
-                'simple_prompt': self.create_simple_prompt(q),
-                'complex_prompt': self.create_complex_prompt(q),
-                'ground_truth': sample.get('answer', '') # Keep full answer for reference
-            })
-        return pairs
+        # Inject 1-2 noise facts
+        num_noise = random.randint(1, 2)
+        for _ in range(num_noise):
+            noise = random.choice(self.noise_facts)
+            insert_pos = random.randint(0, len(lines))
+            lines.insert(insert_pos, noise)
+            
+        new_context = "\n".join(lines)
+        
+        # Also maybe add a perturbation instruction prefix?
+        # For logic, changing the context is usually enough to test robustness.
+        
+        return f"Context:\n{new_context}\n\nQuestion:\n{question}\n\nAnswer:"
 
 if __name__ == "__main__":
-    engine = PerturbationEngine()
-    sample_q = "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?"
-    print("Simple:", engine.create_simple_prompt(sample_q))
-    print("Complex:", engine.create_complex_prompt(sample_q))
+    engine = LogicPerturbationEngine()
+    ctx = "All humans are mortal.\nSocrates is a human."
+    q = "Is Socrates mortal?"
+    print("Simple:\n", engine.create_simple_prompt(ctx, q))
+    print("-" * 20)
+    print("Complex:\n", engine.create_complex_prompt(ctx, q))
