@@ -1,0 +1,4 @@
+Loaded 1001 samples.
+Loading model: Qwen/Qwen3-0.6B
+Starting inference...
+Done. Results saved to /home/zenianliang/Internal_Consistency_LLM/output/inference_results.jsonl

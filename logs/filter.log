@@ -1,0 +1,8 @@
+Filtering complete.
+{
+  "total": 1001,
+  "valid_simple": 393,
+  "conflict": 74,
+  "selected": 74
+}
+Saved 74 samples to /home/zenianliang/Internal_Consistency_LLM/data/sft_train.jsonl
